@@ -1,5 +1,4 @@
 from shopify.config import OrderProcessorConfig
-from typing import Tuple
 
 
 class OrderProcessor:
@@ -24,7 +23,9 @@ class OrderProcessor:
                             "quantity": quantity,
                             "order_numbers": {order_number},
                         }
-            breakdowns[date] = breakdown
+            # only add when there's at least one item
+            if len(breakdown) > 0:
+                breakdowns[date] = breakdown
         return breakdowns
 
     def _filter_order_by_date(self, orders: list, date: str) -> list:

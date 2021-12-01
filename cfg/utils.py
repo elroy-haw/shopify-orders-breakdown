@@ -62,7 +62,7 @@ def validate(cfg: Config) -> KeyError:
         return KeyError(f"{NUM_DAYS_TO_LOOK_AHEAD_KEY} is missing in config")
     if NOTIFICATION_TYPE_KEY not in cfg:
         return KeyError(f"{NOTIFICATION_TYPE_KEY} is missing in config")
-    if cfg.notification_type == NotificationType.EMAIL:
+    if cfg.get(NOTIFICATION_TYPE_KEY) == NotificationType.EMAIL:
         return validate_email_notification_type(cfg)
     return None
 

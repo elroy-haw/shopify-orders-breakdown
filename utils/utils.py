@@ -12,9 +12,8 @@ def validate_env_vars() -> LookupError:
     return None
 
 
-def get_look_ahead_dates() -> list:
+def get_look_ahead_dates(num_days_to_look_ahead: int) -> list:
     today = datetime.today().date()
-    num_days_to_look_ahead = int(environ.get(NUM_DAYS_TO_LOOK_AHEAD_KEY))
     dates = [today + timedelta(d) for d in range(num_days_to_look_ahead)]
     return [date.strftime("%d/%m/%Y") for date in dates]
 
@@ -38,7 +37,7 @@ def write_to_csv(breakdowns: dict) -> list:
             writer.writerow(["name", "quantity", "order_numbers"])
             for name, pair in breakdown.items():
                 quantity = pair["quantity"]
-                order_numbers = ",".join(pair["order_numbers"])
+                order_numbers = pair["order_numbers"]
                 writer.writerow([name, quantity, order_numbers])
         filepaths.append(filepath)
     return filepaths

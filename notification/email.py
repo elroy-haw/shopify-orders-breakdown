@@ -21,16 +21,22 @@ class Recipient:
 
 
 class Email(Notification):
-    def __init__(self, sender: Sender, recipient: Recipient, aws_region: str):
+    def __init__(
+        self,
+        sender: Sender,
+        recipient: Recipient,
+        aws_region: str,
+        last_order_date: str,
+    ):
         super().__init__()
         self.sender = sender
         self.recipient = recipient
         self.aws_region = aws_region
+        self.last_order_date = last_order_date
 
     def notify(self, breakdowns: dict) -> ClientError:
         filepaths = write_to_csv(breakdowns)
-        last_date = get_look_ahead_dates()[-1]
-        message = self._create_message(filepaths, last_date)
+        message = self._create_message(filepaths)
         sender = f"{self.sender.name} <{self.sender.email}>"
         recipient = self.recipient.email
         ses_client = boto3.client("ses", region_name=self.aws_region)
@@ -46,10 +52,10 @@ class Email(Notification):
             return e
         return None
 
-    def _create_message(self, filepaths: list, last_date: str):
+    def _create_message(self, filepaths: list):
         sender = f"{self.sender.name} <{self.sender.email}>"
         recipient = self.recipient.email
-        subject = f"Consolidated daily orders up till {last_date}"
+        subject = f"Consolidated daily orders up till {self.last_order_date}"
 
         # Create a multipart/mixed parent container.
         msg = MIMEMultipart("mixed")

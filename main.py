@@ -9,7 +9,6 @@ from utils.utils import (
     get_look_ahead_dates,
     validate_env_vars,
     CONFIG_FILENAME_KEY,
-    FROM_TIMESTAMP_KEY,
 )
 
 
@@ -27,8 +26,8 @@ def lambda_handler(event, context):
 
     # Get orders
     shopify_client = Client(ShopifyConfig(cfg.shop_url, cfg.api_key, cfg.api_secret))
-    from_ts = environ.get(FROM_TIMESTAMP_KEY)
-    orders = shopify_client.get_orders_from_ts(from_ts)
+    from_timestamp = cfg.from_timestamp
+    orders = shopify_client.get_orders_from_ts(from_timestamp)
     if err != None:
         raise err
 
@@ -38,15 +37,16 @@ def lambda_handler(event, context):
             cfg.static_breakdown_template, cfg.dynamic_breakdown_template
         )
     )
-    dates = get_look_ahead_dates()
+    dates = get_look_ahead_dates(cfg.num_days_to_look_ahead)
     breakdowns = order_processor.process_orders(orders, dates)
 
     # Send email
-    if cfg.notification_type == NotificationType.EMAIL:
+    if cfg.notification_type == NotificationType.EMAIL.value:
         email = Email(
             Sender(cfg.sender_name, cfg.sender_email),
             Recipient(cfg.recipient_email),
             cfg.aws_region,
+            dates[-1],
         )
         err = email.notify(breakdowns)
         if err != None:
