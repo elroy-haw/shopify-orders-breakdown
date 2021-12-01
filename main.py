@@ -1,5 +1,7 @@
 from cfg.utils import load
+from notification.email import Email, Sender, Recipient
 from os import environ
+from notification.notification import NotificationType
 from shopify.client import Client
 from shopify.config import OrderProcessorConfig, ShopifyConfig
 from shopify.order_processor import OrderProcessor
@@ -12,11 +14,12 @@ from utils.utils import (
 
 
 def lambda_handler(event, context):
+    # Validate env vars
     err = validate_env_vars()
-
-    # Load config
     if err != None:
         raise err
+
+    # Load config
     cfg_filename = environ.get(CONFIG_FILENAME_KEY)
     cfg, err = load(cfg_filename)
     if err != None:
@@ -39,6 +42,15 @@ def lambda_handler(event, context):
     breakdowns = order_processor.process_orders(orders, dates)
 
     # Send email
+    if cfg.notification_type == NotificationType.EMAIL:
+        email = Email(
+            Sender(cfg.sender_name, cfg.sender_email),
+            Recipient(cfg.recipient_email),
+            cfg.aws_region,
+        )
+        err = email.notify(breakdowns)
+        if err != None:
+            raise err
 
     return {"status": 200, "message": "success"}
 
