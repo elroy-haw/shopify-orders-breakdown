@@ -6,7 +6,7 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.application import MIMEApplication
 from email.mime.text import MIMEText
 from notification.notification import Notification
-from utils.utils import get_look_ahead_dates, write_to_csv
+from utils.utils import write_to_csv
 
 
 class Sender:
