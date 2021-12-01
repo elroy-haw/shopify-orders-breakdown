@@ -10,6 +10,13 @@
   "shop_url": "<SHOP URL>",
   "api_key": "<PRIVATE APP API KEY>",
   "api_secret": "<PRIVATE APP API SECRET>",
+  "from_timestamp": "2021-11-01T00:00:00+08:00",
+  "num_days_to_look_ahead": 14,
+  "notification_type": "email",
+  "aws_region": "ap-southeast-1",
+  "sender_name": "<SENDER NAME>",
+  "sender_email": "<SENDER EMAIL>",
+  "recipient_email": "<RECIPIENT EMAIL>",
   "static_breakdown_template": {
     // ...
   },

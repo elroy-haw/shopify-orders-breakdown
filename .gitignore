@@ -1,4 +1,7 @@
+__pycache__/
 config/
 venv/
-__pycache__/
+infra/*terraform*
+infra/*.zip
+*.DS_Store*
 .env
