@@ -1,4 +1,5 @@
 from shopify.config import OrderProcessorConfig
+from typing import Tuple
 
 
 class OrderProcessor:
@@ -6,27 +7,44 @@ class OrderProcessor:
         self.static_breakdown_template = cfg.static_breakdown_template
         self.dynamic_breakdown_template = cfg.dynamic_breakdown_template
 
-    def process_orders(self, orders: list, dates: list) -> dict:
-        breakdowns = {}
+    def process_orders(self, orders: list, dates: list) -> Tuple[dict, dict]:
+        all_consolidated_items = {}
+        all_breakdown_items = {}
         for date in dates:
-            breakdown = {}
+            consolidated_items = {}
+            breakdown_items = {}
             filtered_orders = self._filter_order_by_date(orders, date)
             for order in filtered_orders:
                 order_number = order["order_number"]
+                # populate consolidated_items dict
+                for line_item in order["line_items"]:
+                    name = line_item["name"]
+                    quantity = line_item["quantity"]
+                    if name in consolidated_items:
+                        consolidated_items[name]["quantity"] += quantity
+                        consolidated_items[name]["order_numbers"].add(order_number)
+                    else:
+                        consolidated_items[name] = {
+                            "quantity": quantity,
+                            "order_numbers": {order_number},
+                        }
+                # populate breakdown_items dict
                 order_breakdown = self._breakdown_order(order)
                 for item, quantity in order_breakdown.items():
-                    if item in breakdown:
-                        breakdown[item]["quantity"] += quantity
-                        breakdown[item]["order_numbers"].add(order_number)
+                    if item in breakdown_items:
+                        breakdown_items[item]["quantity"] += quantity
+                        breakdown_items[item]["order_numbers"].add(order_number)
                     else:
-                        breakdown[item] = {
+                        breakdown_items[item] = {
                             "quantity": quantity,
                             "order_numbers": {order_number},
                         }
             # only add when there's at least one item
-            if len(breakdown) > 0:
-                breakdowns[date] = breakdown
-        return breakdowns
+            if len(consolidated_items) > 0:
+                all_consolidated_items[date] = consolidated_items
+            if len(breakdown_items) > 0:
+                all_breakdown_items[date] = breakdown_items
+        return all_consolidated_items, all_breakdown_items
 
     def _filter_order_by_date(self, orders: list, date: str) -> list:
         # assumption: date in the format of "%d/%m/%Y" is available in "tags" of the order

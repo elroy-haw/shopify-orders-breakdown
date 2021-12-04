@@ -38,17 +38,23 @@ def lambda_handler(event, context):
         )
     )
     dates = get_look_ahead_dates(cfg.num_days_to_look_ahead)
-    breakdowns = order_processor.process_orders(orders, dates)
+    consolidated_items, breakdown_items = order_processor.process_orders(orders, dates)
 
-    # Send email
+    # Notify
     if cfg.notification_type == NotificationType.EMAIL.value:
         email = Email(
             Sender(cfg.sender_name, cfg.sender_email),
             Recipient(cfg.recipient_email),
             cfg.aws_region,
-            dates[-1],
         )
-        err = email.notify(breakdowns)
+        err = email.notify(
+            f"Consolidated daily orders up till {dates[-1]}", consolidated_items
+        )
+        if err != None:
+            raise err
+        err = email.notify(
+            f"Breakdown of daily orders up till {dates[-1]}", breakdown_items
+        )
         if err != None:
             raise err
 
