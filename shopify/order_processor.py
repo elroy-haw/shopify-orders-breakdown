@@ -67,7 +67,7 @@ class OrderProcessor:
                     items = self.static_breakdown_template[title]
             elif title in self.dynamic_breakdown_template:
                 if type(self.dynamic_breakdown_template[title]) == dict:
-                    _, variant = name.split(" - ")
+                    variant = " - ".join(name.split(" - ")[1:])
                     items = self.dynamic_breakdown_template[title][variant]
                 else:
                     items = self.dynamic_breakdown_template[title]
@@ -79,9 +79,13 @@ class OrderProcessor:
                     template_args = []
                     if "properties" in item:
                         for property in item["properties"]:
-                            value = line_properties.get(property["name"], "missing-property")
+                            value = line_properties.get(
+                                property["name"], "missing-property"
+                            )
                             if "value_map" in property:
-                                value = property["value_map"].get(value, "missing-property")
+                                value = property["value_map"].get(
+                                    value, "missing-property"
+                                )
                             template_args.append(value)
                     formatted_item = item["template"].format(*template_args)
                     formatted_items.append(formatted_item)
