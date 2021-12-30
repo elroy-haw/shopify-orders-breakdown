@@ -21,7 +21,7 @@ resource "null_resource" "prepare_files" {
   triggers = local.file_hashes
 
   provisioner "local-exec" {
-    command = "./scripts/prepare_py_files.sh"
+    command = "./scripts/prepare_files.sh ${dirname(var.config_filepath)}"
   }
 }
 

@@ -1,7 +1,8 @@
 #!/bin/bash
 
-echo "Copying source files into tmp dir..."
-rsync -avr --exclude '__pycache__' ../src tmp
+echo "Copying source and config files into tmp dir..."
+rsync -avr --exclude '__pycache__' ../src/* tmp
+rsync -avr ../$1 tmp
 
 echo "Creating virtual env..."
 python3 -m venv venv
