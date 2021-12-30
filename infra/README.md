@@ -3,7 +3,73 @@ This folder creates a CloudWatch Event Rule that invokes a Lambda on a daily bas
 
 ## Guide
 1. Get the latest version of terraform.
-2. Update the `ses.tf` file with the emails of your sender and receiver.
-3. Update the `cloudwatch.tf` file with the cron expression you desire.
-4. Run `terraform init` to get latest version of `aws` and `null` providers.
-5. Run `terraform apply -auto-approve`.
+2. Create a `terraform.tfvars` file in the infra folder like the following example.
+```
+sender_email="<paste your sender's email address here>"
+receiver_email="<paste your receiver's email address here>"
+schedule="<paste your desired schedule here, see e.g. in variables.tf file>"
+config_filepath="<paste your desired config filepath here, see e.g. in variables.tf file>"
+```
+3. Run the following commands.
+```bash
+terraform init
+terraform apply -auto-approve
+```
+
+## Requirements
+
+| Name | Version |
+|------|---------|
+| <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.0.11 |
+| <a name="requirement_archive"></a> [archive](#requirement\_archive) | >= 2.2.0 |
+| <a name="requirement_aws"></a> [aws](#requirement\_aws) | >= 3.70.0 |
+| <a name="requirement_null"></a> [null](#requirement\_null) | >= 3.1.0 |
+
+## Providers
+
+| Name | Version |
+|------|---------|
+| <a name="provider_archive"></a> [archive](#provider\_archive) | 2.2.0 |
+| <a name="provider_aws"></a> [aws](#provider\_aws) | 3.70.0 |
+| <a name="provider_null"></a> [null](#provider\_null) | 3.1.0 |
+
+## Modules
+
+No modules.
+
+## Resources
+
+| Name | Type |
+|------|------|
+| [aws_cloudwatch_event_rule.orders_processor_cwe_rule](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cloudwatch_event_rule) | resource |
+| [aws_cloudwatch_event_target.orders_processor_cwe_target](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cloudwatch_event_target) | resource |
+| [aws_iam_role.orders_processor_cwe_role](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role) | resource |
+| [aws_iam_role.orders_processor_lambda_role](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role) | resource |
+| [aws_iam_role_policy.orders_processor_cwe_policy](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role_policy) | resource |
+| [aws_iam_role_policy.orders_processor_lambda_policy](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role_policy) | resource |
+| [aws_iam_role_policy_attachment.basic_exec_attach](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role_policy_attachment) | resource |
+| [aws_lambda_function.orders_processor_lambda](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/lambda_function) | resource |
+| [aws_lambda_permission.allow_cwe](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/lambda_permission) | resource |
+| [aws_ses_email_identity.receiver](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/ses_email_identity) | resource |
+| [aws_ses_email_identity.sender](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/ses_email_identity) | resource |
+| [null_resource.prepare_files](https://registry.terraform.io/providers/hashicorp/null/latest/docs/resources/resource) | resource |
+| [archive_file.lambda_package](https://registry.terraform.io/providers/hashicorp/archive/latest/docs/data-sources/file) | data source |
+| [aws_iam_policy_document.cwe_assume_role_policy](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document) | data source |
+| [aws_iam_policy_document.lambda_assume_role_policy](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document) | data source |
+| [aws_iam_policy_document.orders_processor_cwe_policy](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document) | data source |
+| [aws_iam_policy_document.orders_processor_lambda_policy](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document) | data source |
+
+## Inputs
+
+| Name | Description | Type | Default | Required |
+|------|-------------|------|---------|:--------:|
+| <a name="input_config_filepath"></a> [config\_filepath](#input\_config\_filepath) | Config filepath relative to infra folder | `string` | `"config/local.json"` | no |
+| <a name="input_receiver_email"></a> [receiver\_email](#input\_receiver\_email) | Receiver's email | `string` | n/a | yes |
+| <a name="input_schedule"></a> [schedule](#input\_schedule) | Cron expression for scheduling the emails | `string` | `"cron(10 7 * * ? *)"` | no |
+| <a name="input_sender_email"></a> [sender\_email](#input\_sender\_email) | Sender's email | `string` | n/a | yes |
+
+## Outputs
+
+No outputs.
+
+Generated by [`terraform-docs`](https://github.com/terraform-docs/terraform-docs).

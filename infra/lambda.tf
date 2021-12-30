@@ -1,21 +1,27 @@
 locals {
   lambda_package_name = "lambda_package.zip"
+  file_hashes = merge(
+    { for fname in fileset("../src", "**/*.py") : fname => filebase64sha256(format("../src/%s", fname)) },
+    {
+      (var.config_filepath) = filebase64sha256(format("../%s", var.config_filepath))
+      "requirements.txt"    = filebase64sha256("../requirements.txt")
+    }
+  )
 }
 
-resource "null_resource" "zip_files" {
-  triggers = {
-    always_run = timestamp()
-  }
+data "archive_file" "lambda_package" {
+  type        = "zip"
+  source_dir  = "tmp"
+  output_path = local.lambda_package_name
+
+  depends_on = [null_resource.prepare_files]
+}
+
+resource "null_resource" "prepare_files" {
+  triggers = local.file_hashes
 
   provisioner "local-exec" {
-    command = join(" && ", [
-      "rm -f ${local.lambda_package_name}",
-      "cd ../venv/lib/python3.9/site-packages",
-      "zip -r9q $${OLDPWD}/${local.lambda_package_name} .",
-      "cd $${OLDPWD}",
-      "cd ..",
-      "zip -rgq $OLDPWD/lambda_package.zip . -x '*pycache*' -x 'infra*' -x 'venv*' -x '.*' -x '*.md' -x '*.txt'"
-    ])
+    command = "./scripts/prepare_py_files.sh"
   }
 }
 
@@ -25,16 +31,14 @@ resource "aws_lambda_function" "orders_processor_lambda" {
   role             = aws_iam_role.orders_processor_lambda_role.arn
   runtime          = "python3.9"
   filename         = local.lambda_package_name
-  source_code_hash = filebase64sha256(local.lambda_package_name)
-  timeout          = 60
+  source_code_hash = data.archive_file.lambda_package.output_base64sha256
+  timeout          = 300
 
   environment {
     variables = {
-      CONFIG_FILENAME = "config/local.json"
+      CONFIG_FILENAME = var.config_filepath
     }
   }
-
-  depends_on = [null_resource.zip_files]
 }
 
 resource "aws_iam_role" "orders_processor_lambda_role" {

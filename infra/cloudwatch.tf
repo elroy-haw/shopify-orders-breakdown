@@ -1,6 +1,6 @@
 resource "aws_cloudwatch_event_rule" "orders_processor_cwe_rule" {
   name                = "orders-processor-rule"
-  schedule_expression = "cron(10 7 * * ? *)" # everyday at 3.10pm SGT
+  schedule_expression = var.schedule
   role_arn            = aws_iam_role.orders_processor_cwe_role.arn
 }
 

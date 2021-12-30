@@ -3,5 +3,6 @@ config/
 venv/
 infra/*terraform*
 infra/*.zip
+infra/tmp/*
 *.DS_Store*
 .env

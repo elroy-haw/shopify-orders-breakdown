@@ -1,7 +1,7 @@
 resource "aws_ses_email_identity" "sender" {
-  email = "<UPDATE THIS TO YOUR SENDER'S EMAIL>"
+  email = var.sender_email
 }
 
 resource "aws_ses_email_identity" "receiver" {
-  email = "<UPDATE THIS TO YOUR RECEIVER'S EMAIL>"
+  email = var.receiver_email
 }
