@@ -14,6 +14,9 @@ class OrderProcessor:
             consolidated_items = {}
             breakdown_items = {}
             filtered_orders = self._filter_order_by_date(orders, date)
+            filtered_orders = self._filter_order_by_financial_status(
+                filtered_orders, ["paid", "partially_refunded"]
+            )
             for order in filtered_orders:
                 order_number = order["order_number"]
                 # populate consolidated_items dict
@@ -49,6 +52,9 @@ class OrderProcessor:
     def _filter_order_by_date(self, orders: list, date: str) -> list:
         # assumption: date in the format of "%d/%m/%Y" is available in "tags" of the order
         return [order for order in orders if order["tags"] == date]
+
+    def _filter_order_by_financial_status(self, orders: list, statuses: list) -> list:
+        return [order for order in orders if order["financial_status"] in statuses]
 
     def _breakdown_order(self, order) -> dict:
         breakdown = {}

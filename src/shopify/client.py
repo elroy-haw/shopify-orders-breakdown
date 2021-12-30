@@ -10,7 +10,7 @@ class Client:
         self.orders_endpoint = f"https://{cfg.api_key}:{cfg.api_secret}@{cfg.shop_url}/admin/api/2021-10/orders.json"
         self.orders_default_query_params = {
             "status": "open",
-            "financial_status": "paid",
+            "financial_status": "any",
             "fulfillment_status": "unfulfilled",
         }
 
