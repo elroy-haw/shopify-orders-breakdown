@@ -28,7 +28,7 @@ resource "null_resource" "prepare_files" {
 resource "aws_lambda_function" "orders_processor_lambda" {
   function_name    = "orders-processor"
   handler          = "main.lambda_handler"
-  role             = aws_iam_role.orders_processor_lambda_role.arn
+  role             = aws_iam_role.orders_lambda_role.arn
   runtime          = "python3.9"
   filename         = local.lambda_package_name
   source_code_hash = data.archive_file.lambda_package.output_base64sha256
@@ -41,8 +41,24 @@ resource "aws_lambda_function" "orders_processor_lambda" {
   }
 }
 
-resource "aws_iam_role" "orders_processor_lambda_role" {
-  name               = "orders-processor-lambda-role"
+resource "aws_lambda_function" "orders_diff_lambda" {
+  function_name    = "orders-diff"
+  handler          = "diff.lambda_handler"
+  role             = aws_iam_role.orders_lambda_role.arn
+  runtime          = "python3.9"
+  filename         = local.lambda_package_name
+  source_code_hash = data.archive_file.lambda_package.output_base64sha256
+  timeout          = 300
+
+  environment {
+    variables = {
+      CONFIG_FILENAME = var.config_filepath
+    }
+  }
+}
+
+resource "aws_iam_role" "orders_lambda_role" {
+  name               = "orders-lambda-role"
   assume_role_policy = data.aws_iam_policy_document.lambda_assume_role_policy.json
 }
 
@@ -57,12 +73,12 @@ data "aws_iam_policy_document" "lambda_assume_role_policy" {
   }
 }
 
-resource "aws_iam_role_policy" "orders_processor_lambda_policy" {
-  role   = aws_iam_role.orders_processor_lambda_role.id
-  policy = data.aws_iam_policy_document.orders_processor_lambda_policy.json
+resource "aws_iam_role_policy" "orders_lambda_policy" {
+  role   = aws_iam_role.orders_lambda_role.id
+  policy = data.aws_iam_policy_document.orders_lambda_policy.json
 }
 
-data "aws_iam_policy_document" "orders_processor_lambda_policy" {
+data "aws_iam_policy_document" "orders_lambda_policy" {
   statement {
     effect  = "Allow"
     actions = ["ses:SendRawEmail"]
@@ -75,12 +91,19 @@ data "aws_iam_policy_document" "orders_processor_lambda_policy" {
 
 resource "aws_iam_role_policy_attachment" "basic_exec_attach" {
   policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
-  role       = aws_iam_role.orders_processor_lambda_role.name
+  role       = aws_iam_role.orders_lambda_role.name
 }
 
-resource "aws_lambda_permission" "allow_cwe" {
+resource "aws_lambda_permission" "allow_cwe_invoke_orders_processor_lambda" {
   function_name = aws_lambda_function.orders_processor_lambda.function_name
   action        = "lambda:InvokeFunction"
   principal     = "events.amazonaws.com"
   source_arn    = aws_cloudwatch_event_rule.orders_processor_cwe_rule.arn
+}
+
+resource "aws_lambda_permission" "allow_cwe_invoke_orders_diff_lambda" {
+  function_name = aws_lambda_function.orders_diff_lambda.function_name
+  action        = "lambda:InvokeFunction"
+  principal     = "events.amazonaws.com"
+  source_arn    = aws_cloudwatch_event_rule.orders_diff_cwe_rule.arn
 }

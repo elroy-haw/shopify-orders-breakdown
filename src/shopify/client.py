@@ -1,7 +1,7 @@
 import requests
 
 from shopify.config import ShopifyConfig
-from typing import Tuple
+from typing import Any, Dict, List
 from urllib.parse import urlencode
 
 
@@ -14,7 +14,7 @@ class Client:
             "fulfillment_status": "unfulfilled",
         }
 
-    def get_orders(self, query_params: dict) -> list:
+    def get_orders(self, query_params: Dict[str, str]) -> List[Any]:
         orders_endpoint_with_query_params = f"{self.orders_endpoint}?{urlencode(self.orders_default_query_params | query_params)}"
         response = requests.get(orders_endpoint_with_query_params)
         response.raise_for_status()
@@ -41,5 +41,11 @@ class Client:
 
         return orders
 
-    def get_orders_from_ts(self, from_ts: str) -> list:
-        return self.get_orders({"created_at_min": from_ts})
+    def get_orders_with_timestamps(
+        self, created_at_min: str, created_at_max: str = ""
+    ) -> List[Any]:
+        if created_at_max == "":
+            return self.get_orders({"created_at_min": created_at_min})
+        return self.get_orders(
+            {"created_at_min": created_at_min, "created_at_max": created_at_max}
+        )

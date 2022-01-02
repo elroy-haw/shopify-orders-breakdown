@@ -4,9 +4,9 @@ import boto3
 from botocore.exceptions import ClientError
 from email.mime.multipart import MIMEMultipart
 from email.mime.application import MIMEApplication
-from email.mime.text import MIMEText
 from notification.notification import Notification
-from utils.utils import write_to_csv
+from typing import Dict, List
+from utils.utils import write_items_to_csv
 
 
 class Sender:
@@ -32,8 +32,10 @@ class Email(Notification):
         self.recipient = recipient
         self.aws_region = aws_region
 
-    def notify(self, subject: str, items: dict) -> ClientError:
-        filepaths = write_to_csv(items)
+    def notify(
+        self, subject: str, items: Dict[str, Dict[str, Dict[str, str]]]
+    ) -> ClientError:
+        filepaths = write_items_to_csv(items)
         message = self._create_message(subject, filepaths)
         sender = f"{self.sender.name} <{self.sender.email}>"
         recipient = self.recipient.email
@@ -50,7 +52,7 @@ class Email(Notification):
             return e
         return None
 
-    def _create_message(self, subject: str, filepaths: list):
+    def _create_message(self, subject: str, filepaths: List[str]):
         sender = f"{self.sender.name} <{self.sender.email}>"
         recipient = self.recipient.email
 

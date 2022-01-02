@@ -1,5 +1,6 @@
+from datetime import datetime
 from shopify.config import OrderProcessorConfig
-from typing import Tuple
+from typing import Any, Dict, List, Tuple
 
 
 class OrderProcessor:
@@ -7,7 +8,11 @@ class OrderProcessor:
         self.static_breakdown_template = cfg.static_breakdown_template
         self.dynamic_breakdown_template = cfg.dynamic_breakdown_template
 
-    def process_orders(self, orders: list, dates: list) -> Tuple[dict, dict]:
+    def process_orders(
+        self, orders: List[Any], dates: List[str]
+    ) -> Tuple[
+        Dict[str, Dict[str, Dict[str, str]]], Dict[str, Dict[str, Dict[str, str]]]
+    ]:
         all_consolidated_items = {}
         all_breakdown_items = {}
         for date in dates:
@@ -49,14 +54,78 @@ class OrderProcessor:
                 all_breakdown_items[date] = breakdown_items
         return all_consolidated_items, all_breakdown_items
 
-    def _filter_order_by_date(self, orders: list, date: str) -> list:
+    def diff_items(
+        self,
+        items_computed_today: Dict[str, Dict[str, str]],
+        items_computed_yesterday: Dict[str, Dict[str, str]],
+    ) -> Dict[str, Dict[str, Dict[str, str]]]:
+        diff = {}
+        if items_computed_today:
+            for name, pair in items_computed_today.items():
+                # name in today but not yesterday -> item added
+                if name not in items_computed_yesterday:
+                    diff[name] = {
+                        "status": "added",
+                        "quantity_yesterday": 0,
+                        "order_numbers_yesterday": set(),
+                        "quantity_today": pair["quantity"],
+                        "order_numbers_today": pair["order_numbers"],
+                    }
+                else:
+                    # name in today and yesterday -> check if item quantity/order_numbers updated
+                    quantity_yesterday = items_computed_yesterday[name]["quantity"]
+                    order_numbers_yesterday = items_computed_yesterday[name][
+                        "order_numbers"
+                    ]
+                    quantity_diff = pair["quantity"] - quantity_yesterday
+                    order_numbers_diff = pair["order_numbers"] - order_numbers_yesterday
+                    if quantity_diff > 0 or len(order_numbers_diff) > 0:
+                        diff[name] = {
+                            "status": "added",
+                            "quantity_yesterday": quantity_yesterday,
+                            "order_numbers_yesterday": order_numbers_yesterday,
+                            "quantity_today": pair["quantity"],
+                            "order_numbers_today": pair["order_numbers"],
+                        }
+        if items_computed_yesterday:
+            for name, pair in items_computed_yesterday.items():
+                # name in yesterday but not today -> item removed
+                if name not in items_computed_today:
+                    diff[name] = {
+                        "status": "removed",
+                        "quantity_yesterday": pair["quantity"],
+                        "order_numbers_yesterday": pair["order_numbers"],
+                        "quantity_today": 0,
+                        "order_numbers_today": set(),
+                    }
+                else:
+                    # name in yesterday and today -> check if item quantity/order_numbers updated
+                    quantity_today = items_computed_today[name]["quantity"]
+                    order_numbers_today = items_computed_today[name]["order_numbers"]
+                    quantity_diff = pair["quantity"] - quantity_today
+                    order_numbers_diff = pair["order_numbers"] - order_numbers_today
+                    if quantity_diff > 0 or len(order_numbers_diff) > 0:
+                        diff[name] = {
+                            "status": "removed",
+                            "quantity_yesterday": pair["quantity"],
+                            "order_numbers_yesterday": pair["order_numbers"],
+                            "quantity_today": quantity_today,
+                            "order_numbers_today": order_numbers_today,
+                        }
+        if len(diff) > 0:
+            return {datetime.now().strftime("%d/%m/%Y"): diff}
+        return {}
+
+    def _filter_order_by_date(self, orders: List[Any], date: str) -> List[Any]:
         # assumption: date in the format of "%d/%m/%Y" is available in "tags" of the order
         return [order for order in orders if order["tags"] == date]
 
-    def _filter_order_by_financial_status(self, orders: list, statuses: list) -> list:
+    def _filter_order_by_financial_status(
+        self, orders: List[Any], statuses: List[str]
+    ) -> List[Any]:
         return [order for order in orders if order["financial_status"] in statuses]
 
-    def _breakdown_order(self, order) -> dict:
+    def _breakdown_order(self, order: Any) -> Dict[str, str]:
         breakdown = {}
         for line_item in order["line_items"]:
             # title is title of the product
